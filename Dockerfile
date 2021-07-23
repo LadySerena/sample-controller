@@ -5,12 +5,12 @@ COPY Makefile ./
 COPY go.mod go.sum ./
 RUN go mod download
 COPY main.go ./
-COPY reconcile ./
+COPY reconcile/ ./reconcile
 
 
 RUN make build
 
 FROM gcr.io/distroless/base
 
-COPY --from=builder ./pod-timestamp-controller /pod-timestamp-controller
+COPY --from=builder /workspace/pod-timestamp-controller /pod-timestamp-controller
 ENTRYPOINT ["/pod-timestamp-controller"]
