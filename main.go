@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -25,8 +27,8 @@ func Bail(logger logr.Logger, err error, message string) {
 }
 
 func main() {
-
-	log := logf.Log.WithName("sample-controller")
+	log := zap.New().WithName("sample-controller")
+	logf.SetLogger(log)
 	restConfig, configErr := config.GetConfig()
 	if configErr != nil {
 		errorMessage := "error creating restConfig from pod service account"
@@ -78,9 +80,19 @@ func main() {
 	if managerCreateError != nil {
 		Bail(log, managerCreateError, "could not create the manager")
 	}
+
+	mgr.AddHealthzCheck("test", func(req *http.Request) error {
+		return nil
+	})
+	mgr.AddReadyzCheck("test2", func(req *http.Request) error {
+		return nil
+	})
 	podController, controllerCreateError := controller.New("sample-controller", mgr, controller.Options{
 		MaxConcurrentReconciles: 1,
-		Reconciler:              reconcile.Loop{},
+		Reconciler: &reconcile.Loop{
+			Client: mgr.GetClient(),
+			Log: log,
+		},
 		RateLimiter:             nil,
 		Log:                     log,
 		CacheSyncTimeout:        2 * time.Minute, // todo make configurable

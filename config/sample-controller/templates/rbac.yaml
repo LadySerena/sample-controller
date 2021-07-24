@@ -1,0 +1,44 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "sample-controller.fullname" .}}
+  labels:
+    {{- include "sample-controller.labels" . | nindent 4}}
+rules:
+  - verbs:
+    - get
+    - watch
+    - update
+    - list
+    apiGroups:
+      - ""
+    resources:
+      - pods
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "sample-controller.fullname" .}}
+  labels:
+  {{- include "sample-controller.labels" . | nindent 4}}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "sample-controller.serviceAccountName" .}}
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "sample-controller.fullname" .}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "sample-controller.serviceAccountName" . }}
+  labels:
+  {{- include "sample-controller.labels" . | nindent 4 }}
+  {{- with .Values.rbac.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end}}

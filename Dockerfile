@@ -1,9 +1,9 @@
 FROM golang:1.16 AS builder
 
 WORKDIR /workspace
-COPY Makefile ./
 COPY go.mod go.sum ./
 RUN go mod download
+COPY Makefile ./
 COPY main.go ./
 COPY reconcile/ ./reconcile
 
