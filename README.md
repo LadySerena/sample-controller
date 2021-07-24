@@ -17,7 +17,7 @@ have docker installed).
 
 1. start up the cluster and registry by running `./scripts/create-kind-with-registry.sh`
 
-2. build the image by running `docker build -t localhost:5000/sample-controller:<version number>`
+2. build the image by running `docker build -t localhost:5000/sample-controller:<version number> .`
 
 3. push the image by running `docker push localhost:5000/sample-controller:<version number>`
 
