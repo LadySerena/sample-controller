@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/ladyserena/sample-controller/reconcile"
 	"go.uber.org/zap/zapcore"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -60,8 +61,15 @@ func setGlobalLogger() logr.Logger {
 
 func getScheme() (*runtime.Scheme, error) {
 	controllerScheme := runtime.NewScheme()
-	schemeErr := corev1.AddToScheme(controllerScheme)
-	return controllerScheme, schemeErr
+	coreSchemeErr := corev1.AddToScheme(controllerScheme)
+	if coreSchemeErr != nil {
+		return nil, coreSchemeErr
+	}
+	leaseSchemeErr := coordinationv1.AddToScheme(controllerScheme)
+	if leaseSchemeErr != nil {
+		return nil, leaseSchemeErr
+	}
+	return controllerScheme, nil
 }
 
 func createManagerFromEnvironment(scheme *runtime.Scheme, config *rest.Config) (manager.Manager, error) {
@@ -74,10 +82,18 @@ func createManagerFromEnvironment(scheme *runtime.Scheme, config *rest.Config) (
 		healthAddress = ":8081"
 	}
 
+	content, readErr := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if readErr != nil {
+		return nil, readErr
+	}
+
 	options := manager.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddress,
-		HealthProbeBindAddress: healthAddress,
+		Scheme:                  scheme,
+		MetricsBindAddress:      metricsAddress,
+		HealthProbeBindAddress:  healthAddress,
+		LeaderElection:          true,
+		LeaderElectionNamespace: string(content),
+		LeaderElectionID:        "pod-timestamp-leader-election",
 	}
 
 	mgr, managerErr := manager.New(config, options)
@@ -100,7 +116,7 @@ func createManagerFromEnvironment(scheme *runtime.Scheme, config *rest.Config) (
 
 func createController(logger logr.Logger, mgr manager.Manager) (controller.Controller, error) {
 	return controller.New("sample-controller", mgr, controller.Options{
-		MaxConcurrentReconciles: 0,
+		MaxConcurrentReconciles: 1,
 		Reconciler: &reconcile.Loop{
 			Client: mgr.GetClient(),
 			Log:    logger,
