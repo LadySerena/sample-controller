@@ -8,7 +8,7 @@ image:
   repository: localhost:5000/sample-controller
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "latest"
 
 imagePullSecrets: [ ]
 nameOverride: ""
@@ -26,7 +26,7 @@ podSecurityContext: { }
 
 securityContext: { }
   # capabilities:
-  #   drop:
+#   drop:
 #   - ALL
 # readOnlyRootFilesystem: true
 # runAsNonRoot: true
@@ -58,7 +58,7 @@ resources: { }
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #   cpu: 100m
+#   cpu: 100m
 #   memory: 128Mi
 # requests:
 #   cpu: 100m

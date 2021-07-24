@@ -1,4 +1,4 @@
-package init
+package prestart
 
 import (
 	"net/http"

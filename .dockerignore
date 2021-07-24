@@ -27,3 +27,5 @@ gen
 pod-timestamp-controller
 sample-controller
 config
+README.md
+Dockerfile
