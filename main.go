@@ -27,7 +27,7 @@ func Bail(logger logr.Logger, err error, message string) {
 }
 
 func main() {
-	log := zap.New().WithName("sample-controller")
+	log := zap.New(zap.WriteTo(os.Stdout)).WithName("sample-controller")
 	logf.SetLogger(log)
 	restConfig, configErr := config.GetConfig()
 	if configErr != nil {
@@ -81,21 +81,27 @@ func main() {
 		Bail(log, managerCreateError, "could not create the manager")
 	}
 
-	mgr.AddHealthzCheck("test", func(req *http.Request) error {
+	addHealthErr := mgr.AddHealthzCheck("test", func(req *http.Request) error {
 		return nil
 	})
-	mgr.AddReadyzCheck("test2", func(req *http.Request) error {
+	if addHealthErr != nil {
+		Bail(log, addHealthErr, "could not add healthz check")
+	}
+	addReadyErr := mgr.AddReadyzCheck("test2", func(req *http.Request) error {
 		return nil
 	})
+	if addReadyErr != nil {
+		Bail(log, addReadyErr, "could not add ready check")
+	}
 	podController, controllerCreateError := controller.New("sample-controller", mgr, controller.Options{
 		MaxConcurrentReconciles: 1,
 		Reconciler: &reconcile.Loop{
 			Client: mgr.GetClient(),
-			Log: log,
+			Log:    log,
 		},
-		RateLimiter:             nil,
-		Log:                     log,
-		CacheSyncTimeout:        2 * time.Minute, // todo make configurable
+		RateLimiter:      nil,
+		Log:              log,
+		CacheSyncTimeout: 2 * time.Minute, // todo make configurable
 	})
 	if controllerCreateError != nil {
 		Bail(log, controllerCreateError, "could not create controller")
