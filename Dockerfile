@@ -1,6 +1,7 @@
 FROM golang:1.16 AS builder
 WORKDIR /workspace
 COPY --from=golangci/golangci-lint:v1.41.1 /usr/bin/golangci-lint /usr/bin/golangci-lint
+COPY .golangci.yaml ./
 COPY go.mod go.sum ./
 RUN go mod download
 COPY Makefile ./
