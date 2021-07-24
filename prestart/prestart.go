@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Do runs the init process of all the components for the controller to run
+// Do runs the init process of all the components for the controller to run (schemes, logger, manager, watch, and controller)
 func Do() manager.Manager {
 	logger := setGlobalLogger()
 	restConfig, configErr := config.GetConfig()
